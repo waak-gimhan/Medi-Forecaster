@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Trained ML models
+ml/models/*.pkl
+ml/models/*.joblib
+
+# Generated ML outputs
+ml/data/forecast_7_days.csv
+ml/data/prepared_medicine_data.csv
+
+# Environment
+.env
