@@ -2,5 +2,9 @@ pandas
 numpy
 scikit-learn
 matplotlib
-seaborngir
+seaborn
 joblib
+psycopg2-binary
+fastapi
+uvicorn
+pydantic
