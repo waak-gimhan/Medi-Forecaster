@@ -15,21 +15,24 @@ export default function App() {
         </div>
         <nav>
           <NavLink to="/dashboard" className="nav-link">
-            Dashboard
+             Dashboard
           </NavLink>
           <NavLink to="/sales" className="nav-link">
-            Daily Sales
+             Daily Sales
           </NavLink>
           <NavLink to="/inventory" className="nav-link">
-            Current Stock
+             Current Stock
           </NavLink>
           <NavLink to="/forecasts" className="nav-link">
-            Forecasts
+             Forecasts
           </NavLink>
           <NavLink to="/recommendations" className="nav-link">
-            Purchase Recommendations
+             Purchase Recommendations
           </NavLink>
         </nav>
+        <div className="sidebar-footer">
+          RxForecast v2.0 · AI/ML
+        </div>
       </aside>
       <main className="content">
         <Routes>
