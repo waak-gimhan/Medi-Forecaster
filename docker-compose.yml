@@ -1,0 +1,83 @@
+services:
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: pharmacy_postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-pharmacy_demand}
+      POSTGRES_USER:     ${POSTGRES_USER:-pharmacy_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pharmacy_pass}
+
+    ports:
+      # Expose to host so you can use pgAdmin / psql locally if needed.
+      # Remove or change this in production.
+      - "5433:5432"
+
+    volumes:
+      # Named volume: data persists across "docker compose down / up"
+      # Only deleted with "docker compose down -v"
+      - postgres_data:/var/lib/postgresql/data
+
+      # Init script runs ONLY when postgres_data volume is empty (first start)
+      - ./database/pharmacy_backup.sql:/docker-entrypoint-initdb.d/01_pharmacy_backup.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pharmacy_user} -d ${POSTGRES_DB:-pharmacy_demand}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # ── FastAPI Backend ───────────────────────────────────────────────────
+  backend:
+    build:
+      context: .                 # MUST be project root — imports use backend.* and ml.*
+      dockerfile: backend/Dockerfile
+
+    container_name: pharmacy_backend
+    restart: unless-stopped
+
+    depends_on:
+      postgres:
+        condition: service_healthy   # Wait until pg_isready passes
+
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-pharmacy_user}:${POSTGRES_PASSWORD:-pharmacy_pass}@postgres:5432/${POSTGRES_DB:-pharmacy_demand}
+      CORS_ORIGINS:  http://localhost:3000,http://localhost:5173
+      PYTHONUNBUFFERED: "1"
+
+    ports:
+      # Direct API access & Swagger docs at http://localhost:8000/docs
+      - "8000:8000"
+
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── React + Nginx Frontend ────────────────────────────────────────────
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+
+    container_name: pharmacy_frontend
+    restart: unless-stopped
+
+    depends_on:
+      backend:
+        condition: service_healthy   # Wait until FastAPI /health passes
+
+    ports:
+      - "3000:80"
+
+# ── Named Volumes ─────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    # This volume is NOT deleted by "docker compose down".
+    # Use "docker compose down -v" ONLY if you want to reset the database.

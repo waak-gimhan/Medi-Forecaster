@@ -1,7 +1,9 @@
+import os
 from datetime import date
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from backend.database import get_dict_connection, init_tables
@@ -25,6 +27,21 @@ app = FastAPI(
     title="Pharmacy Medicine Demand Forecasting API",
     description="Daily sales entry + dynamic 7-day forecasting + inventory recommendations.",
     version="1.0.0",
+)
+
+# ── CORS ──────────────────────────────────────────────────────────────
+# In Docker: Nginx serves the frontend on port 3000 and reverse-proxies
+# /api → backend:8000, so the browser only talks to Nginx.
+# CORS_ORIGINS env var lets you tighten this for specific deployments.
+_cors_raw = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
+_cors_origins = [o.strip() for o in _cors_raw.split(",") if o.strip()]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -54,6 +71,19 @@ def root():
         "message": "Pharmacy Demand Forecasting API",
         "docs": "/docs",
     }
+
+
+@app.get("/health")
+def health_check():
+    """Docker health-check endpoint — verifies API and DB are reachable."""
+    try:
+        conn = get_dict_connection()
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1;")
+        conn.close()
+        return {"status": "ok", "database": "connected"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Database unreachable: {e}")
 
 
 @app.get("/medicines")

@@ -1,10 +1,18 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
 .venv/
 venv/
+env/
+.env
 
-# Trained ML models
+# Node
+node_modules/
+dist/
+.npm/
+
+# ML models (large binary files — include them manually or via Git LFS)
 ml/models/*.pkl
 ml/models/*.joblib
 
@@ -12,5 +20,18 @@ ml/models/*.joblib
 ml/data/forecast_7_days.csv
 ml/data/prepared_medicine_data.csv
 
-# Environment
-.env
+# Logs
+*.log
+vite.log
+vite.err.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Docker volumes (never commit)
+postgres_data/

@@ -1,22 +1,21 @@
+import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+# 1. Get the connection URL from the environment, fallback to localhost if not found
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://postgres:1234@localhost:5432/pharmacy_demand"
+)
 
-DB_CONFIG = {
-    "host": "localhost",
-    "port": 5432,
-    "database": "pharmacy_demand",
-    "user": "postgres",
-    "password": "1234",
-}
-
-
+# 2. Helper functions to connect using the URL string
 def get_connection():
-    return psycopg2.connect(**DB_CONFIG)
+    return psycopg2.connect(DATABASE_URL)
 
 
 def get_dict_connection():
-    return psycopg2.connect(**DB_CONFIG, cursor_factory=RealDictCursor)
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+
 
 
 def _table_exists(cur, table_name: str) -> bool:
