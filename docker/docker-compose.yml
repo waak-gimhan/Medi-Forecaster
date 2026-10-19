@@ -1,0 +1,37 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: pharmacy_postgres
+
+    environment:
+      POSTGRES_DB: pharmacy_db
+      POSTGRES_USER: pharmacy_user
+      POSTGRES_PASSWORD: pharmacy_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/pharmacy_backup.sql:/docker-entrypoint-initdb.d/01-init.sql
+
+
+  backend:
+    build:
+      context: ./backend
+
+    container_name: pharmacy_backend
+
+    depends_on:
+      - postgres
+
+    environment:
+      DATABASE_URL: postgresql://pharmacy_user:pharmacy_password@postgres:5432/pharmacy_db
+
+    ports:
+      - "8000:8000"
+
+
+volumes:
+  postgres_data:
